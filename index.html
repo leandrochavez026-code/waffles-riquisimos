@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Riquísimos Waffles — Pedido</title>
+
+<!-- ==========================
+     Estilos (CSS)
+     ========================== -->
+<style>
+  :root{
+    --bg: #b3e5fc;
+    --card: #fff;
+    --text: #222;
+    --accent: #8fd7a6; /* verde claro para selección */
+    --muted: #cfcfcf;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter, Poppins, system-ui, sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+  /* Contenedor centrado */
+  .wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:24px;padding:36px 16px 80px;}
+
+  h1{font-family:'Pacifico', 'Dancing Script', cursive;font-size:2.6rem;margin:6px 0 4px;color:var(--text);text-align:center}
+  /* Tarjetas de waffles */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;width:100%;max-width:1100px}
+  .card{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 8px 22px rgba(0,0,0,0.12);text-align:center;position:relative}
+  .card img{width:100%;height:200px;object-fit:cover;border-radius:14px;display:block;margin-bottom:12px}
+
+  .title-rgb{
+    font-weight:700;font-size:1.4rem;margin:6px 0;
+    background:linear-gradient(90deg, red, green, blue, orange);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+
+  .list{list-style:"• ";text-align:left;padding-left:18px;margin:8px 0;color:var(--text)}
+  .list li{margin:6px 0}
+
+  .note{font-style:italic;text-align:center;color:#444;margin-top:6px}
+  .price{color:green;font-weight:700;font-size:1.15rem;margin-top:8px}
+
+  /* Botón principal */
+  .btn{
+    display:inline-block;background:#222;color:#fff;padding:10px 18px;border-radius:14px;text-decoration:none;font-weight:700;margin-top:16px;cursor:pointer;
+    transition:transform .12s ease, background-color .12s ease;
+  }
+  .btn:hover{transform:scale(1.04);background:#111}
+
+  /* --- Apartado Ingredientes y Pedidos --- */
+  .ingredients-section{width:100%;max-width:1100px;margin-top:8px}
+  .ingredients-card{background:var(--card);border-radius:20px;padding:22px;box-shadow:0 8px 22px rgba(0,0,0,0.12);position:relative}
+
+  .section-title{font-size:1.5rem;font-style:italic;color:var(--text);text-align:center;margin-bottom:12px}
+
+  /* selector waffle (toggle) */
+  .waffle-choice{display:flex;gap:12px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+  .choice{
+    padding:10px 14px;border-radius:999px;border:2px solid transparent;background:#f5f5f5;cursor:pointer;font-weight:700;
+    transition:all .12s;user-select:none;
+  }
+  .choice.active{background:var(--accent);border-color:rgba(0,0,0,0.08);}
+
+  /* Grid de ingredientes: 3 columnas arriba, 2 abajo */
+  .grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px;
+  }
+
+  .group{
+    background:transparent;border-radius:12px;padding:8px 6px;
+  }
+  .group h4{margin:6px 0 8px;font-size:1rem}
+  .options{display:flex;flex-direction:column;gap:8px}
+
+  /* option button */
+  .option{
+    display:flex;align-items:center;justify-content:space-between;border:2px solid #f0f0f0;padding:8px 10px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfbfb);cursor:pointer;
+    transition:all .12s;user-select:none;
+  }
+  .option.disabled{opacity:0.45;cursor:not-allowed}
+  .option .label{font-weight:600;color:var(--text)}
+  .option .counter{display:flex;gap:8px;align-items:center}
+  .counter button{width:28px;height:28px;border-radius:8px;border:none;background:#eee;cursor:pointer;font-weight:700}
+  .counter .count{min-width:22px;text-align:center}
+
+  /* cuando está seleccionada al menos 1 -> color */
+  .option.selected{border-color:var(--accent);box-shadow:0 4px 10px rgba(143,215,166,0.18);background:#f7fffa}
+
+  /* diseño fila inferior con 2 col */
+  .grid-bottom{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:12px}
+
+  /* enviar y confirm */
+  .send-row{display:flex;justify-content:center;margin-top:18px;gap:12px;align-items:center}
+  .btn-green{background:var(--accent);border:none;color:#075; padding:10px 18px;border-radius:12px;font-weight:700;cursor:pointer}
+  .btn-green:hover{transform:scale(1.03)}
+
+  /* modal confirm */
+  .modal-back{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:1200}
+  .modal{background:#fff;padding:18px;border-radius:14px;max-width:420px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,0.25);text-align:left}
+  .modal h3{margin:0 0 8px}
+  .modal .preview{background:#fbfbfb;padding:10px;border-radius:8px;margin:8px 0;max-height:220px;overflow:auto;font-size:.95rem}
+
+  /* success */
+  .toast{position:fixed;right:18px;bottom:18px;background:#222;color:#fff;padding:12px 14px;border-radius:10px;display:none;z-index:1300}
+
+  /* responsive adjustments */
+  @media (max-width:980px){
+    .grid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width:640px){
+    h1{font-size:2rem}
+    .grid{grid-template-columns:1fr}
+    .grid-bottom{grid-template-columns:1fr}
+    .card img{height:180px}
+    .option{padding:10px}
+  }
+
+  /* Burbujas animadas (sutiles) */
+  .bubble{position:fixed;bottom:-120px;background:rgba(255,255,255,0.5);border-radius:50%;box-shadow:0 6px 18px rgba(0,0,0,0.08);animation:rise var(--dur,18s) linear infinite;z-index:0}
+  @keyframes rise{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-120vh) scale(1.3);opacity:0}}
+  .b1{left:6%;width:28px;height:28px;--dur:19s}
+  .b2{left:20%;width:40px;height:40px;--dur:22s}
+  .b3{left:36%;width:32px;height:32px;--dur:17s}
+  .b4{left:56%;width:48px;height:48px;--dur:24s}
+  .b5{left:74%;width:24px;height:24px;--dur:16s}
+  .b6{left:88%;width:36px;height:36px;--dur:20s}
+
+  /* small helper */
+  .muted{color:#666;font-size:.95rem}
+  .small{font-size:.88rem}
+</style>
+
+<!-- Load EmailJS SDK -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Riquísimos Waffles</h1>
+
+  <!-- Tarjetas con los dos waffles -->
+  <div class="cards" aria-label="Productos">
+    <div class="card" aria-labelledby="wc-title">
+      <img src="waffle-completo-delicioso.jpg" alt="Waffle Completo (imagen)">
+      <div id="wc-title" class="title-rgb">Waffle Completo</div>
+      <ul class="list">
+        <li>2 frutas</li>
+        <li>Leche condensada</li>
+        <li>1 miel</li>
+        <li>Nutella o Crema Batida</li>
+        <li>Anicillo</li>
+      </ul>
+      <div class="note">(Todo es opcional)</div>
+      <div class="price">Q25</div>
+    </div>
+
+    <div class="card" aria-labelledby="ws-title">
+      <img src="waffle-simple-clasico.jpg" alt="Waffle Simple (imagen)">
+      <div id="ws-title" class="title-rgb">Waffle Simple</div>
+      <ul class="list">
+        <li>1 miel</li>
+        <li>1 fruta</li>
+        <li>Leche condensada</li>
+      </ul>
+      <div class="note">(Todo es opcional)</div>
+      <div class="price">Q15</div>
+    </div>
+  </div>
+
+  <!-- Ingredientes y Pedidos (misma página) -->
+  <div class="ingredients-section" id="ingredientes">
+    <div class="ingredients-card">
+      <div class="section-title">Ingredientes y Pedidos</div>
+
+      <!-- Selector tipo Waffle -->
+      <div class="waffle-choice" role="tablist" aria-label="Tipo de waffle">
+        <div class="choice active" data-type="completo" tabindex="0">Waffle Completo</div>
+        <div class="choice" data-type="simple" tabindex="0">Waffle Simple</div>
+      </div>
+
+      <!-- Grid 3 columnas arriba -->
+      <div class="grid">
+        <!-- Frutas (col 1) -->
+        <div class="group" data-group="frutas" aria-labelledby="g-frutas">
+          <h4 id="g-frutas">Frutas (máx <span class="limit-display">2</span>)</h4>
+          <div class="options" id="opt-frutas"></div>
+        </div>
+
+        <!-- Complementos (col 2) -->
+        <div class="group" data-group="complementos" aria-labelledby="g-comp">
+          <h4 id="g-comp">Complementos (máx <span class="limit-display">1</span>)</h4>
+          <div class="options" id="opt-complementos"></div>
+        </div>
+
+        <!-- Esencias (col 3) -->
+        <div class="group" data-group="esencias" aria-labelledby="g-ess">
+          <h4 id="g-ess">Esencias (máx <span class="limit-display">1</span>)</h4>
+          <div class="options" id="opt-esencias"></div>
+        </div>
+      </div>
+
+      <!-- Grid inferior 2 columnas -->
+      <div class="grid-bottom" style="margin-top:14px;">
+        <!-- Mieles -->
+        <div class="group" data-group="mieles" aria-labelledby="g-mieles">
+          <h4 id="g-mieles">Mieles (máx <span class="limit-display">1</span>)</h4>
+          <div class="options" id="opt-mieles"></div>
+        </div>
+
+        <!-- Decoracion -->
+        <div class="group" data-group="decoracion" aria-labelledby="g-deco">
+          <h4 id="g-deco">Decoración (máx <span class="limit-display">1</span>)</h4>
+          <div class="options" id="opt-decoracion"></div>
+        </div>
+      </div>
+
+      <div class="send-row">
+        <div class="muted small">Revisa tu selección y presiona enviar</div>
+        <button class="btn-green" id="openConfirm">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- burbujas decorativas -->
+<div class="bubble b1"></div>
+<div class="bubble b2"></div>
+<div class="bubble b3"></div>
+<div class="bubble b4"></div>
+<div class="bubble b5"></div>
+<div class="bubble b6"></div>
+
+<!-- Modal confirm -->
+<div class="modal-back" id="modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h3>¿Confirmar envío?</h3>
+    <div class="preview" id="previewContent"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn" id="cancelConfirm">Cancelar</button>
+      <button class="btn-green" id="doSend">Confirmar y enviar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Enviado correctamente</div>
+
+<!-- ==========================
+     Script (JS) - lógica
+     ========================== -->
+<script>
+/* ====== CONFIG EmailJS (ya con tus valores) ====== */
+emailjs.init('xfPINFworWKTjhPBT'); // public key
+
+const EMAIL_SERVICE = 'service_t1jlwe2';
+const EMAIL_TEMPLATE = 'template_zyr9xsd';
+/* ================================================= */
+
+/* Datos de ingredientes en orden EXACTO que pediste */
+const DATA = {
+  frutas: ['Melocotón','Banano','Fresa','Kiwi'],
+  complementos: ['Crema Batida','Nutella','Leche condensada'],
+  esencias: ['Esencia de Dulce de Leche','Esencia de Fresa'],
+  mieles: ['Miel de Abeja','Miel de Maple'],
+  decoracion: ['Anicillo']
+};
+
+/* límites por tipo de waffle (Complet o Simple) */
+const LIMITS = {
+  completo: { frutas:2, complementos:1, esencias:1, mieles:1, decoracion:1 },
+  simple:   { frutas:1, complementos:0, esencias:0, mieles:1, decoracion:0 }
+};
+
+/* Estado actual */
+let currentType = 'completo';
+const state = {
+  frutas:{}, complementos:{}, esencias:{}, mieles:{}, decoracion:{}
+};
+
+/* Genera las opciones UI por grupo */
+function buildOptions(){
+  // clear containers
+  document.getElementById('opt-frutas').innerHTML = '';
+  document.getElementById('opt-complementos').innerHTML = '';
+  document.getElementById('opt-esencias').innerHTML = '';
+  document.getElementById('opt-mieles').innerHTML = '';
+  document.getElementById('opt-decoracion').innerHTML = '';
+
+  for(const group of Object.keys(DATA)){
+    const list = DATA[group];
+    const container = document.getElementById('opt-' + group);
+    list.forEach((label, idx) => {
+      // initial count 0
+      state[group][label] = 0;
+      // create element
+      const opt = document.createElement('div');
+      opt.className = 'option';
+      opt.dataset.group = group;
+      opt.dataset.label = label;
+      opt.innerHTML = `
+        <div class="label">${label}</div>
+        <div class="counter" aria-hidden="true">
+          <button class="dec" title="Quitar">−</button>
+          <div class="count">0</div>
+          <button class="inc" title="Agregar">+</button>
+        </div>
+      `;
+      // events: inc/dec
+      const inc = opt.querySelector('.inc');
+      const dec = opt.querySelector('.dec');
+      const cnt = opt.querySelector('.count');
+
+      inc.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        modifyOption(group, label, +1, opt, cnt);
+      });
+      dec.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        modifyOption(group, label, -1, opt, cnt);
+      });
+
+      // also allow clicking the whole option to +1
+      opt.addEventListener('click', (e)=>{
+        modifyOption(group, label, +1, opt, cnt);
+      });
+
+      container.appendChild(opt);
+    });
+  }
+  updateLimitsDisplay();
+  refreshDisabledStates();
+}
+
+/* Modify count for an option: delta can be +1 or -1 */
+function modifyOption(group,label,delta,optElement,cntElement){
+  const limits = LIMITS[currentType];
+  const maxGroup = limits[group] !== undefined ? limits[group] : 0;
+  const currentTotal = totalSelected(group);
+  let cur = state[group][label] || 0;
+  // decrease
+  if(delta < 0){
+    if(cur <= 0) return;
+    cur = cur + delta;
+    state[group][label] = cur;
+    cntElement.textContent = cur;
+    if(cur === 0) optElement.classList.remove('selected');
+    refreshDisabledStates();
+    return;
+  }
+  // increase
+  if(currentTotal >= maxGroup) {
+    // reached group limit -> do nothing
+    return;
+  }
+  // else increment for this label
+  cur = cur + 1;
+  state[group][label] = cur;
+  cntElement.textContent = cur;
+  if(cur > 0) optElement.classList.add('selected');
+  refreshDisabledStates();
+}
+
+/* total selected in a group */
+function totalSelected(group){
+  return Object.values(state[group]).reduce((s,v)=>s+v,0);
+}
+
+/* update displayed limits numbers */
+function updateLimitsDisplay(){
+  document.querySelectorAll('.group').forEach(groupEl=>{
+    const g = groupEl.dataset.group;
+    const span = groupEl.querySelector('.limit-display');
+    if(span){
+      span.textContent = LIMITS[currentType][g] ?? 0;
+    }
+  });
+}
+
+/* disable other options in same group when limit reached */
+function refreshDisabledStates(){
+  for(const g of Object.keys(DATA)){
+    const max = LIMITS[currentType][g] ?? 0;
+    const total = totalSelected(g);
+    const opts = document.querySelectorAll(`#opt-${g} .option`);
+    opts.forEach(opt=>{
+      const label = opt.dataset.label;
+      const cur = state[g][label] || 0;
+      if(total >= max && max>0){
+        // If current option has zero count -> disabled; if this option already has >0 allowed to decrement
+        if(cur === 0){
+          opt.classList.add('disabled');
+          opt.querySelectorAll('button').forEach(b=>b.disabled=true);
+        } else {
+          opt.classList.remove('disabled');
+          opt.querySelectorAll('button').forEach(b=>b.disabled=false);
+        }
+      } else {
+        opt.classList.remove('disabled');
+        opt.querySelectorAll('button').forEach(b=>b.disabled=false);
+      }
+      // If group's max is zero -> disable all
+      if(max === 0){
+        opt.classList.add('disabled');
+        opt.querySelectorAll('button').forEach(b=>b.disabled=true);
+      }
+      // update displayed count
+      const cnt = opt.querySelector('.count');
+      cnt.textContent = state[g][label] || 0;
+    });
+  }
+  // update headers (limit number)
+  updateLimitsDisplay();
+}
+
+/* handle waffle type toggle */
+function setWaffleType(type){
+  currentType = type;
+  // update UI choice buttons
+  document.querySelectorAll('.choice').forEach(c=>{
+    c.classList.toggle('active', c.dataset.type === type);
+  });
+  // If some selected exceed new limits, we will reduce highest entries automatically
+  for(const g of Object.keys(DATA)){
+    const max = LIMITS[type][g] ?? 0;
+    let total = totalSelected(g);
+    if(total > max){
+      // reduce from last options (reduce proportionally)
+      const items = Object.keys(state[g]);
+      for(let i = items.length-1; i>=0 && total>max; i--){
+        const label = items[i];
+        const cur = state[g][label];
+        if(cur>0){
+          const reduceBy = Math.min(cur, total - max);
+          state[g][label] = cur - reduceBy;
+          total -= reduceBy;
+        }
+      }
+    }
+  }
+  refreshDisabledStates();
+}
+
+/* Build preview text shown in modal */
+function buildPreview(){
+  const lines = [];
+  lines.push(`Tipo de waffle: ${currentType === 'completo' ? 'Waffle Completo' : 'Waffle Simple'}`);
+  for(const g of Object.keys(DATA)){
+    const chosen = Object.entries(state[g]).filter(([,v])=>v>0).map(([k,v])=> (v>1?`${k} x${v}`:k));
+    if(chosen.length) lines.push(`${capitalize(g)}: ${chosen.join(', ')}`);
+  }
+  if(lines.length===1) lines.push('(No hay ingredientes seleccionados)');
+  return lines.join('\n');
+}
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1) }
+
+/* Open confirm modal */
+const modal = document.getElementById('modal');
+const previewContent = document.getElementById('previewContent');
+document.getElementById('openConfirm').addEventListener('click', ()=>{
+  previewContent.textContent = buildPreview();
+  modal.style.display = 'flex';
+});
+
+/* Cancel modal */
+document.getElementById('cancelConfirm').addEventListener('click', ()=>{
+  modal.style.display = 'none';
+});
+
+/* Send using EmailJS */
+document.getElementById('doSend').addEventListener('click', async ()=>{
+  // prepare payload
+  const waffleLabel = currentType === 'completo' ? 'Waffle Completo' : 'Waffle Simple';
+  const items = {};
+  for(const g of Object.keys(DATA)){
+    const chosen = Object.entries(state[g]).filter(([,v])=>v>0).map(([k,v])=> (v>1?`${k} x${v}`:k));
+    if(chosen.length) items[g] = chosen.join(', ');
+  }
+  const messageLines = [`Tipo: ${waffleLabel}`];
+  for(const k of Object.keys(items)){
+    messageLines.push(`${capitalize(k)}: ${items[k]}`);
+  }
+  const message = messageLines.join('\n');
+
+  // template params: these keys depend on your template, but usually template expects e.g. to_name, message, from_name ...
+  const templateParams = {
+    to_email: 'leandrochavez026@gmail.com',
+    waffle_type: waffleLabel,
+    order_details: message,
+    // you can add more fields if your template expects them
+  };
+
+  // show loading feedback (disable button)
+  const sendBtn = document.getElementById('doSend');
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Enviando...';
+
+  try{
+    await emailjs.send(EMAIL_SERVICE, EMAIL_TEMPLATE, templateParams);
+    modal.style.display = 'none';
+    showToast('Pedido enviado correctamente ✅');
+    // reset selections
+    for(const g of Object.keys(state)){
+      for(const k of Object.keys(state[g])) state[g][k]=0;
+    }
+    refreshDisabledStates();
+  }catch(err){
+    console.error('EmailJS error', err);
+    alert('Ocurrió un error al enviar. Revisa la consola o tus credenciales de EmailJS.');
+  }finally{
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Confirmar y enviar';
+  }
+});
+
+/* toast */
+function showToast(text){
+  const t = document.getElementById('toast');
+  t.textContent = text; t.style.display='block';
+  setTimeout(()=> t.style.display='none',3500);
+}
+
+/* initialize UI */
+buildOptions();
+
+/* hook up choice toggles */
+document.querySelectorAll('.choice').forEach(c=>{
+  c.addEventListener('click', ()=> {
+    setWaffleType(c.dataset.type);
+  });
+});
+
+/* On load, make sure limits display correct */
+setWaffleType('completo');
+
+/* Optional: scroll to ingredientes section when user clicks "Ver más ingredientes" (we removed that button earlier),
+   but you said you didn't want a Ver más button — if you want auto scroll, let me know. */
+
+/* Accessibility: close modal with ESC */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape') modal.style.display = 'none';
+});
+</script>
+</body>
+</html>
