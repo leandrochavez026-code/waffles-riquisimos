@@ -271,7 +271,9 @@ const DATA = {
     { nombre: 'Anicillo', stock: 0 }
   ]
      
-}; tipo de waffle (Complet o Simple) */
+};
+
+/* tipo de waffle (Completo o Simple) */
 const LIMITS = {
   completo: { frutas:2, complementos:1, esencias:1, mieles:1, decoracion:1 },
   simple:   { frutas:1, complementos:0, esencias:0, mieles:1, decoracion:1 }
@@ -521,27 +523,6 @@ document.getElementById('doSend').addEventListener('click', ()=>{
   showToast('Pedido enviado por WhatsApp 📲');
 
 });
-  // prepare payload
-  const waffleLabel = currentType === 'completo' ? 'Waffle Completo' : 'Waffle Simple';
-  const items = {};
-  for(const g of Object.keys(DATA)){
-    const chosen = Object.entries(state[g]).filter(([,v])=>v>0).map(([k,v])=> (v>1?`${k} x${v}`:k));
-    if(chosen.length) items[g] = chosen.join(', ');
-  }
-  const messageLines = [`Tipo: ${waffleLabel}`];
-  for(const k of Object.keys(items)){
-    messageLines.push(`${capitalize(k)}: ${items[k]}`);
-  }
-  const message = messageLines.join('\n');
-
-  // template params: these keys depend on your template, but usually template expects e.g. to_name, message, from_name ...
-  const templateParams = {
-    to_email: 'leandrochavez026@gmail.com',
-    waffle_type: waffleLabel,
-    order_details: message,
-    // you can add more fields if your template expects them
-  };
-
   // show loading feedback (disable button)
   const sendBtn = document.getElementById('doSend');
   sendBtn.disabled = true;
