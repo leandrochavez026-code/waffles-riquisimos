@@ -523,21 +523,6 @@ document.getElementById('doSend').addEventListener('click', ()=>{
   showToast('Pedido enviado por WhatsApp 📲');
 
 });
-  // show loading feedback (disable button)
-  const sendBtn = document.getElementById('doSend');
-  sendBtn.disabled = true;
-  sendBtn.textContent = 'Enviando...';
-
-  try{
-    
-  }catch(err){
-    console.error('EmailJS error', err);
-    alert('Ocurrió un error al enviar. Revisa la consola o tus credenciales de EmailJS.');
-  }finally{
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Confirmar y enviar';
-  }
-});
 
 /* toast */
 function showToast(text){
