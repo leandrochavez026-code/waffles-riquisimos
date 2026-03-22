@@ -131,7 +131,7 @@
 </style>
 
 <!-- Load EmailJS SDK -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
 </head>
 <body>
 
@@ -246,23 +246,32 @@
      Script (JS) - lógica
      ========================== -->
 <script>
-/* ====== CONFIG EmailJS (ya con tus valores) ====== */
-emailjs.init('xfPINFworWKTjhPBT'); // public key
 
-const EMAIL_SERVICE = 'service_t1jlwe2';
-const EMAIL_TEMPLATE = 'template_zyr9xsd';
-/* ================================================= */
-
-/* Datos de ingredientes en orden EXACTO que pediste */
 const DATA = {
-  frutas: ['Melocotón','Banano','Fresa','Kiwi'],
-  complementos: ['Crema Batida','Nutella','Leche condensada'],
-  esencias: ['Esencia de Dulce de Leche','Esencia de Fresa'],
-  mieles: ['Miel de Abeja','Miel de Maple'],
-  decoracion: ['Anicillo']
-};
-
-/* límites por tipo de waffle (Complet o Simple) */
+  frutas: [
+    { nombre: 'Melocotón', stock: 10 },
+    { nombre: 'Banano', stock: 0 },
+    { nombre: 'Fresa', stock: 8 },
+    { nombre: 'Kiwi', stock: 5 }
+  ],
+  complementos: [
+    { nombre: 'Crema Batida', stock: 4 },
+    { nombre: 'Nutella', stock: 0 },
+    { nombre: 'Leche condensada', stock: 6 }
+  ],
+  esencias: [
+    { nombre: 'Esencia de Dulce de Leche', stock: 3 },
+    { nombre: 'Esencia de Fresa', stock: 2 }
+  ],
+  mieles: [
+    { nombre: 'Miel de Abeja', stock: 5 },
+    { nombre: 'Miel de Maple', stock: 0 }
+  ],
+  decoracion: [
+    { nombre: 'Anicillo', stock: 7 }
+  ]
+     
+}; tipo de waffle (Complet o Simple) */
 const LIMITS = {
   completo: { frutas:2, complementos:1, esencias:1, mieles:1, decoracion:1 },
   simple:   { frutas:1, complementos:0, esencias:0, mieles:1, decoracion:0 }
@@ -286,7 +295,10 @@ function buildOptions(){
   for(const group of Object.keys(DATA)){
     const list = DATA[group];
     const container = document.getElementById('opt-' + group);
-    list.forEach((label, idx) => {
+    list.forEach((item, idx) => {
+
+  const label = item.nombre;
+  const stock = item.stock;
       // initial count 0
       state[group][label] = 0;
       // create element
@@ -295,13 +307,20 @@ function buildOptions(){
       opt.dataset.group = group;
       opt.dataset.label = label;
       opt.innerHTML = `
-        <div class="label">${label}</div>
+        <div class="label">
+  ${label}
+  ${stock === 0 ? '<span style="color:red;font-size:0.8rem;"> (Agotado)</span>' : ''}
+</div>
         <div class="counter" aria-hidden="true">
           <button class="dec" title="Quitar">−</button>
           <div class="count">0</div>
           <button class="inc" title="Agregar">+</button>
         </div>
       `;
+         if(stock === 0){
+  opt.classList.add('disabled');
+  opt.querySelectorAll('button').forEach(b=>b.disabled=true);
+}
       // events: inc/dec
       const inc = opt.querySelector('.inc');
       const dec = opt.querySelector('.dec');
@@ -464,7 +483,44 @@ document.getElementById('cancelConfirm').addEventListener('click', ()=>{
 });
 
 /* Send using EmailJS */
-document.getElementById('doSend').addEventListener('click', async ()=>{
+document.getElementById('doSend').addEventListener('click', ()=>{
+
+  const waffleLabel = currentType === 'completo'
+    ? 'Waffle Completo'
+    : 'Waffle Simple';
+
+  const items = {};
+
+  for(const g of Object.keys(DATA)){
+    const chosen = Object.entries(state[g])
+      .filter(([,v])=>v>0)
+      .map(([k,v])=> (v>1?`${k} x${v}`:k));
+
+    if(chosen.length){
+      items[g] = chosen.join(', ');
+    }
+  }
+
+  let message = `Pedido:\n`;
+  message += `Tipo: ${waffleLabel}\n`;
+
+  for(const k of Object.keys(items)){
+    message += `${capitalize(k)}: ${items[k]}\n`;
+  }
+
+  const telefono = "50241761775";
+
+  const url =
+    `https://wa.me/${telefono}?text=` +
+    encodeURIComponent(message);
+
+  window.open(url, "_blank");
+
+  modal.style.display = 'none';
+
+  showToast('Pedido enviado por WhatsApp 📲');
+
+});
   // prepare payload
   const waffleLabel = currentType === 'completo' ? 'Waffle Completo' : 'Waffle Simple';
   const items = {};
@@ -492,14 +548,7 @@ document.getElementById('doSend').addEventListener('click', async ()=>{
   sendBtn.textContent = 'Enviando...';
 
   try{
-    await emailjs.send(EMAIL_SERVICE, EMAIL_TEMPLATE, templateParams);
-    modal.style.display = 'none';
-    showToast('Pedido enviado correctamente ✅');
-    // reset selections
-    for(const g of Object.keys(state)){
-      for(const k of Object.keys(state[g])) state[g][k]=0;
-    }
-    refreshDisabledStates();
+    
   }catch(err){
     console.error('EmailJS error', err);
     alert('Ocurrió un error al enviar. Revisa la consola o tus credenciales de EmailJS.');
