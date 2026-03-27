@@ -255,25 +255,28 @@ const DATA = {
   ],
   complementos: [
     { nombre: 'Crema Batida', stock: 30 },
-    { nombre: 'Nutella', stock: 30 },
-    { nombre: 'Leche condensada', stock: 30 }
+    { nombre: 'Nutella', stock: 30 }
   ],
   esencias: [
-    { nombre: 'Esencia de Dulce de Leche', stock: 30 }
+    { nombre: 'Esencia de Dulce de Leche', stock: 30 },
+    {nombre: 'Esencia de Fresa', stock:30 },
+    { nombre: 'Chocolate', stock: 30 },
+    { nombre: 'Leche Condensada', stock: 30 }
   ],
   mieles: [
     { nombre: 'Miel de Abeja', stock: 30 },
     { nombre: 'Miel de Maple', stock: 30 }
   ],
   decoracion: [
-    { nombre: 'Cereza', stock: 30 }
+    { nombre: 'Cereza', stock: 30 },
+    { nombre: 'Anicillo', stock: 30 }
   ]
      
 };
 
 /* tipo de waffle (Completo o Simple) */
 const LIMITS = {
-  completo: { frutas:2, complementos:1, esencias:1, mieles:1, decoracion:1 },
+  completo: { frutas:2, complementos:1, esencias:1, mieles:1, decoracion:2 },
   simple:   { frutas:1, complementos:0, esencias:0, mieles:1, decoracion:1 }
 };
 
